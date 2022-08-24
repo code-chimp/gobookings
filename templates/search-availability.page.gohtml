@@ -1,0 +1,248 @@
+{{template "base" .}}
+
+{{define "content"}}
+  <div class="row">
+    <div class="col-md-6 offset-md-3">
+      <h1 class="text-center mt-4"><span id="roomDesc"></span> Availability</h1>
+      <form action="/search-availability" id="searchForm" method="get" novalidate>
+        <div class="row mb-3" id="reservationRange">
+          <div class="col">
+            <input type="text" class="form-control"
+                   id="startDate" name="startDate"
+                   placeholder="check in" required>
+          </div>
+          <div class="col">
+            <input type="text" class="form-control"
+                   id="endDate" name="endDate"
+                   placeholder="check out" required>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Search</button>
+      </form>
+    </div>
+    <!-- test page js with some shparkely buttonses -->
+    <div class="row">
+      <div class="col text-center">
+        <button id="yosh" class="btn btn-success">Brraaap</button>
+        <button id="schmeckle" class="btn btn-danger">Smacketh anon</button>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col text-center">
+        <button id="stan" class="btn btn-warning">Skragunkle</button>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col text-center">
+        <button id="modBtn" class="btn btn-info">Test Mod</button>
+        <button id="squadBtn" class="btn btn-primary">Test Squad</button>
+        <button id="scoob" class="btn btn-secondary">Hippies!</button>
+      </div>
+    </div>
+  </div>
+{{end}}
+
+{{define "js"}}
+  <script>
+    (() => {
+      let roomDisplay = document.getElementById('roomDesc');
+      let params = new URLSearchParams(location.search);
+      let roomCode = params.get('r');
+      let room = 'Search';
+      let attention = Prompt();
+
+      if (roomCode) {
+        switch (roomCode) {
+          case 'g':
+            room = 'General\'s Quarters';
+            break;
+
+          case 'c':
+            room = 'Colonel\'s Suite';
+            break;
+
+          default:
+            room = 'Search';
+        }
+      }
+
+      roomDisplay.innerText = room;
+
+      let startPicker = document.getElementById('startDate');
+      let endPicker = document.getElementById('endDate');
+      let startDate = params.get('startDate');
+      let endDate = params.get('endDate');
+
+      if (startDate) {
+        startPicker.value = startDate;
+        endPicker.value = endDate;
+      }
+
+      // type: success (default), error, warning
+      let notify = (msg, type) => {
+        notie.alert({
+          type: type || 'success',
+          text: msg,
+          stay: false,
+          position: 'top'
+        });
+      };
+
+      // type warning, error, success, info (default)
+      let nofifyModal = (msg, title, type) => {
+        let opts = {
+          text: msg,
+          icon: type || 'info',
+          confirmButtonText: 'OK'
+        };
+
+        if (title) {
+          opts.title = title;
+        }
+
+        Swal.fire(opts);
+      };
+
+      document.getElementById('yosh')
+        .addEventListener('click', () => notify('yeeeeehaaaw bubba mo gee'));
+      document.getElementById('schmeckle')
+        .addEventListener('click', () => notify('yerfucle', 'error'));
+      document.getElementById('stan')
+        .addEventListener('click', () => nofifyModal('you did it', null, 'warning'));
+      document.getElementById('modBtn')
+        .addEventListener('click', () => attention.toast({ msg: 'git er done' }));
+      document.getElementById('squadBtn')
+        .addEventListener('click', () => attention.success({ msg: 'Jehosephat!' }));
+      document.getElementById('scoob')
+        .addEventListener('click', () => {
+          let body = `
+          <form id="availabilityFrm" method="post" action="" novalidate>
+            <div class="row">
+              <div class="col">
+                <div id="modalDateRange" class="row">
+                  <div class="col">
+                    <input type="text" class=""
+                           id="startDate2" name="startDate2"
+                           placeholder="check-in" disabled required>
+                  </div>
+                  <div class="col">
+                    <input type="text" class=""
+                           id="endDate2" name="endDate2"
+                           placeholder="check-out" disabled required>
+                  </div>
+                </div>
+              </div>
+          </div>
+          </form>
+        `;
+
+          attention.custom({ body, title: 'Choose Your Dates' });
+        });
+
+      window.addEventListener('load', () => {
+        let form = document.getElementById('searchForm');
+        let rangeControls = document.getElementById('reservationRange');
+
+        let rangePicker = new DateRangePicker(rangeControls, {
+          format: 'yyyy-mm-dd'
+        });
+
+        form.addEventListener('submit', e => {
+          if (!form.checkValidity()) {
+            e.preventDefault();
+            e.stopPropagation();
+          }
+
+          form.classList.add('was-validated');
+        }, false);
+      });
+
+      function Prompt() {
+        let toast = opts => {
+          const {
+            msg = '',
+            icon = 'info',
+            position = 'top-end'
+          } = opts;
+
+          const Toast = Swal.mixin({
+            toast: true,
+            icon,
+            title: msg,
+            position,
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+            didOpen: obj => {
+              obj.addEventListener('mouseenter', Swal.stopTimer);
+              obj.addEventListener('mouseleave', Swal.resumeTimer);
+            }
+          });
+
+          Toast.fire({});
+        };
+
+        let success = opts => {
+          const {
+            title = 'Success!',
+            msg = ''
+          } = opts;
+
+          Swal.fire({
+            icon: 'success',
+            title,
+            text: msg
+          });
+        };
+
+        let error = opts => {
+          const { title = 'Error', msg = '' } = opts;
+
+          Swal.fire({
+            icon: 'error',
+            title,
+            text: msg
+          });
+        };
+
+        let custom = async (opts) => {
+          const {
+            title = '',
+            body = ''
+          } = opts;
+
+          const { value: formValues } = await Swal.fire({
+            title,
+            html: body,
+            backdrop: false,
+            focusConfirm: false,
+            showCancelButton: true,
+            willOpen: () => {
+              let rangePicker = new DateRangePicker(document.getElementById('modalDateRange'), {
+                format: 'yyyy-mm-dd',
+                showOnFocus: true,
+              });
+            },
+            didOpen: () => {
+              document.getElementById('startDate2').removeAttribute('disabled');
+              document.getElementById('endDate2').removeAttribute('disabled');
+            },
+            preConfirm: () => {
+              return [
+                document.getElementById('startDate2').value,
+                document.getElementById('endDate2').value
+              ];
+            }
+          });
+
+          if (formValues) {
+            Swal.fire(JSON.stringify(formValues));
+          }
+        };
+
+        return { toast, success, error, custom };
+      }
+    })();
+  </script>
+{{end}}

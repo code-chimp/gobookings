@@ -1,0 +1,16 @@
+.notie-container {
+  box-shadow: none;
+}
+
+.my-footer {
+  background-color: #163b65;
+  color: #fefefe;
+  margin-top: 1.5em;
+  height: 4em;
+  padding: 1em;
+  font-size: 80%;
+}
+
+.datepicker-dropdown {
+  z-index: 10000;
+}
